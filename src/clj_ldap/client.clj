@@ -185,6 +185,8 @@
         ldaps-port (or (:port h) 636)
         opt (connection-options options)]
     (cond
+      (and ssl? startTLS?) (doto (LDAPConnection. (create-ssl-factory options) opt host ldaps-port)
+                             (.processExtendedOperation (StartTLSExtendedRequest. (create-ssl-context options))))
       ssl? (let [ssl (create-ssl-factory options)]
              (LDAPConnection. ssl opt host ldaps-port))
       startTLS? (let [conn (LDAPConnection. opt host ldap-port)]

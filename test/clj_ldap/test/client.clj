@@ -72,7 +72,7 @@
    (ldap/connect {:ssl? true
                   :host {:port ssl-port}
                   :initial-connections 2})
-   (ldap/connect {:starTLS? true
+   (ldap/connect {:startTLS? true
                   :host {:port port}})
    (ldap/connect {:host {:port port}
                   :connect-timeout 1000
@@ -84,7 +84,11 @@
                          {:port ssl-port}]
                   :ssl? true
                   :num-connections 5
-                  :max-connections 10})])
+                  :max-connections 10})
+   (ldap/connect {:host {:address "localhost"
+                         :port port}
+                  :ssl? true
+                  :startTLS? true})])
 
 
 (defn- test-server
