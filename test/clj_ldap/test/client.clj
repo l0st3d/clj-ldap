@@ -84,7 +84,19 @@
                          {:port ssl-port}]
                   :ssl? true
                   :num-connections 5
-                  :max-connections 10})])
+                  :max-connections 10})
+   (ldap/connect {:host [(str "localhost:" ssl-port)
+                         {:port ssl-port}]
+                  :ssl? true
+                  :trust-store "test-trust-store.jks"})
+   (ldap/connect {:host [(str "localhost:" ssl-port)
+                         {:port ssl-port}]
+                  :ssl? true
+                  :jvm-trust-manager true})
+   (ldap/connect {:host [(str "localhost:" ssl-port)
+                         {:port ssl-port}]
+                  :ssl? true
+                  :trust-hosts "test1.example.com,test2.example.com,test3.example.com"})])
 
 
 (defn- test-server

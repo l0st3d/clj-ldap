@@ -50,7 +50,10 @@
   (:import [com.unboundid.util.ssl
             SSLUtil
             TrustAllTrustManager
-            TrustStoreTrustManager]))
+            TrustStoreTrustManager
+            JVMDefaultTrustManager
+            HostNameTrustManager
+            AggregateTrustManager]))
 
 ;;======== Helper functions ====================================================
 
@@ -138,21 +141,45 @@
     (when timeout         (.setResponseTimeoutMillis opt timeout))
     opt))
 
+(defn- create-trust-store-manager [{:keys [trust-store trust-store-pin trust-store-format]}]
+  (when trust-store
+    (if trust-store-pin
+      (let [tsf (clojure.core/get #{"PKCS12"} trust-store-format "JKS")]
+        (TrustStoreTrustManager. trust-store (.toCharArray trust-store-pin) tsf true))
+      (TrustStoreTrustManager. trust-store))))
+
+(defn- create-hostname-trust-manager [{:keys [trust-hosts]}]
+  (some->> (if (string? trust-hosts)
+             (string/split trust-hosts #",")
+             trust-hosts)
+           (filter string?)
+           not-empty
+           (HostNameTrustManager. true)))
+
+(defn- create-jvm-trust-manager [{:keys [jvm-trust-manager]}]
+  (when-not (-> jvm-trust-manager str .toLowerCase #{"false"})
+    (JVMDefaultTrustManager/getInstance)))
+
+(defn- create-trust-manager [options]
+  (let [x (some->> [(create-trust-store-manager options)
+                    (create-hostname-trust-manager options)
+                    (create-jvm-trust-manager options)]
+                   (remove nil?)
+                   not-empty
+                   (AggregateTrustManager. true))]
+    (or x (TrustAllTrustManager.))))
+
 (defn- create-ssl-context
   "Returns a SSLContext object"
-  [{:keys [trust-store]}]
-  (let [trust-manager (if trust-store
-                        (TrustStoreTrustManager. trust-store)
-                        (TrustAllTrustManager.))
+  [options]
+  (let [trust-manager (create-trust-manager options)
         ssl-util (SSLUtil. trust-manager)]
     (.createSSLContext ssl-util)))
 
 (defn- create-ssl-factory
   "Returns a SSLSocketFactory object"
-  [{:keys [trust-store]}]
-  (let [trust-manager (if trust-store
-                        (TrustStoreTrustManager. trust-store)
-                        (TrustAllTrustManager.))
+  [options]
+  (let [trust-manager (create-trust-manager options)
         ssl-util (SSLUtil. trust-manager)]
     (.createSSLSocketFactory ssl-util)))
 
