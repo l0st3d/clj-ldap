@@ -1,0 +1,1 @@
+{:deps {com.unboundid/unboundid-ldapsdk {:mvn/version "4.0.4"}}}
