@@ -149,15 +149,15 @@
       (TrustStoreTrustManager. trust-store))))
 
 (defn- create-hostname-trust-manager [{:keys [trust-hosts]}]
-  (some->> (if (string? trust-hosts)
-             (string/split trust-hosts #",")
-             trust-hosts)
-           (filter string?)
-           not-empty
-           (HostNameTrustManager. true)))
+  (let [hosts (->> (if (string? trust-hosts)
+                     (string/split trust-hosts #",")
+                     trust-hosts)
+                   (filter string?))]
+    (when (not-empty hosts)
+      (HostNameTrustManager. true hosts))))
 
 (defn- create-jvm-trust-manager [{:keys [jvm-trust-manager]}]
-  (when-not (-> jvm-trust-manager str .toLowerCase #{"false"})
+  (when (-> jvm-trust-manager str .toLowerCase (= "true"))
     (JVMDefaultTrustManager/getInstance)))
 
 (defn- create-trust-manager [options]
